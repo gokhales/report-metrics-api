@@ -1,0 +1,6 @@
+@BGReportMetrics.API_HostAddress = http://localhost:5277
+
+GET {{BGReportMetrics.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
