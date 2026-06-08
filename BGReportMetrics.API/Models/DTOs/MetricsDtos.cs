@@ -20,25 +20,18 @@ public class DualCountDto
     public int Total => MglCount + PgxCount;
 }
 
-public class AmendedMglDto
+// Amended/Corrected: grouped by reason + type only (no lab number)
+public class AmendedReasonDto
 {
-    public string LabNumber { get; set; } = string.Empty;
     public string Reason { get; set; } = string.Empty;
     public string ReportUnlockType { get; set; } = string.Empty;
     public int Count { get; set; }
 }
 
-public class AmendedLimsDto
-{
-    public string LabNumber { get; set; } = string.Empty;
-    public string ReportUnlockType { get; set; } = string.Empty;
-    public string Reason { get; set; } = string.Empty;
-}
-
 public class AmendedCorrectedDto
 {
-    public List<AmendedMglDto> Mgl { get; set; } = [];
-    public List<AmendedLimsDto> Lims { get; set; } = [];
+    public List<AmendedReasonDto> Mgl { get; set; } = [];
+    public List<AmendedReasonDto> Lims { get; set; } = [];
 }
 
 public class DelayedReportDto

@@ -94,34 +94,37 @@ public class MetricsService(MglDbContext mglDb, LimsDbContext limsDb, IConfigura
             """, new { start, end });
     }
 
-    // ── 5. Amended / Corrected ───────────────────────────────────────────
-    // MGL  → non-PGx / non-BIO  (Samples + ArchiveReportLog + ReportUnlocks)
-    // LIMS → PGx / BIO           (LimsOrder + LimsReport + LimsReportUnlocks)
+    // ── 5. Amended / Corrected grouped by reason + type ─────────────────
+    // MGL  → non-PGx / non-BIO  — filters on OriginalFaxDate AND ar.WhenArchived in range
+    // LIMS → PGx / BIO           — filters on R.ReportedDate in range
     public async Task<AmendedCorrectedDto> GetAmendedCorrectedAsync(DateTime start, DateTime end)
     {
         using var mgl  = MglConn();
         using var lims = LimsConn();
 
-        var mglRows = await mgl.QueryAsync<AmendedMglDto>("""
-            SELECT s.LabNumber, ru.Reason, ru.ReportUnlockType, COUNT(*) as Count
+        var mglRows = await mgl.QueryAsync<AmendedReasonDto>("""
+            SELECT ru.Reason, ru.ReportUnlockType, COUNT(*) AS Count
             FROM Samples s
             INNER JOIN ArchiveReportLog ar ON s.Id = ar.SamplesId
             INNER JOIN ReportUnlocks ru ON s.Id = ru.SampleId
             WHERE s.OriginalFaxDate BETWEEN @start AND @end
               AND s.FaxedDate IS NOT NULL
+              AND ar.WhenArchived BETWEEN @start AND @end
               AND ru.ReportUnlockType <> 'Clean'
-            GROUP BY s.LabNumber, ru.ReportUnlockType, ru.Reason
-            ORDER BY s.LabNumber DESC
+            GROUP BY ru.ReportUnlockType, ru.Reason
+            ORDER BY Count DESC
             """, new { start, end });
 
-        var limsRows = await lims.QueryAsync<AmendedLimsDto>("""
-            SELECT O.OldLabNumber as LabNumber, U.ReportUnlockType, U.Reason
+        var limsRows = await lims.QueryAsync<AmendedReasonDto>("""
+            SELECT U.ReportUnlockType, U.Reason, COUNT(*) AS Count
             FROM LimsOrder O
+            JOIN PanelTestCode P ON P.Id = O.PanelTestCodeId
             JOIN LimsReport R ON R.OrderId = O.Id
             JOIN LimsReportUnlocks U ON U.ReportId = R.Id
             WHERE U.IsOnReport = 1
               AND R.ReportedDate BETWEEN @start AND @end
-            ORDER BY O.OldLabNumber DESC
+            GROUP BY U.ReportUnlockType, U.Reason
+            ORDER BY Count DESC
             """, new { start, end });
 
         return new AmendedCorrectedDto { Mgl = mglRows.ToList(), Lims = limsRows.ToList() };

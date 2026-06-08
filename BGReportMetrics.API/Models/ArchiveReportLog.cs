@@ -8,6 +8,7 @@ public class ArchiveReportLog
 {
     [Key] public int Id { get; set; }
     public int SamplesId { get; set; }
+    public DateTime WhenArchived { get; set; }
 
     [ForeignKey(nameof(SamplesId))]
     public Sample? Sample { get; set; }

@@ -92,7 +92,12 @@ public static class DbInitializer
                 });
 
                 if (!isCancelled)
-                    archiveLogs.Add(new ArchiveReportLog { Id = sampleId, SamplesId = sampleId });
+                    archiveLogs.Add(new ArchiveReportLog
+                    {
+                        Id           = sampleId,
+                        SamplesId    = sampleId,
+                        WhenArchived = faxedDate.AddDays(rng.Next(0, 3)) // archived same day or up to 2 days after fax
+                    });
 
                 int effectiveTat = clientTestCodeId.HasValue
                     ? clientCodes.First(c => c.Id == clientTestCodeId).TAT
